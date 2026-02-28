@@ -3,24 +3,39 @@
 'use strict';
 
 const firstPromise = new Promise((resolve, reject) => {
-  document.addEventListener('click', () => {
+  const handleLeftClick = () => {
+    clearTimeout(timeoutId);
+    document.removeEventListener('click', handleLeftClick);
     resolve('First promise was resolved');
-  });
+  };
 
-  setTimeout(() => {
+  document.addEventListener('click', handleLeftClick);
+
+  const timeoutId = setTimeout(() => {
+    document.removeEventListener('click', handleLeftClick);
     reject(new Error('First promise was rejected'));
   }, 3000);
 });
 
 const secondPromise = new Promise((resolve) => {
-  document.addEventListener('click', () => {
-    resolve('Second promise was resolved');
-  });
+  const cleanUpListeners = () => {
+    document.removeEventListener('click', handleLeftClick);
+    document.removeEventListener('contextmenu', handleRightClick);
+  };
 
-  document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
+  const handleLeftClick = () => {
+    cleanUpListeners();
     resolve('Second promise was resolved');
-  });
+  };
+
+  const handleRightClick = (e) => {
+    e.preventDefault();
+    cleanUpListeners();
+    resolve('Second promise was resolved');
+  };
+
+  document.addEventListener('click', handleLeftClick);
+  document.addEventListener('contextmenu', handleRightClick);
 });
 
 const thirdPromise = new Promise((resolve) => {
@@ -29,20 +44,25 @@ const thirdPromise = new Promise((resolve) => {
 
   const checkBothClicks = () => {
     if (hasLeftClicked && hasRightClicked) {
+      document.removeEventListener('click', handleLeftClick);
+      document.removeEventListener('contextmenu', handleRightClick);
       resolve('Third promise was resolved');
     }
   };
 
-  document.addEventListener('click', () => {
+  const handleLeftClick = () => {
     hasLeftClicked = true;
     checkBothClicks();
-  });
+  };
 
-  document.addEventListener('contextmenu', (e) => {
+  const handleRightClick = (e) => {
     e.preventDefault();
     hasRightClicked = true;
     checkBothClicks();
-  });
+  };
+
+  document.addEventListener('click', handleLeftClick);
+  document.addEventListener('contextmenu', handleRightClick);
 });
 
 const successHandler = (message) => {
